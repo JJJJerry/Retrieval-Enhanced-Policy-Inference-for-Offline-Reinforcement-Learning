@@ -78,10 +78,9 @@ class RetrievalRL:
             self.target_action=pickle.load(f)
         with open(os.path.join(config['index_dir_path'],'rtgs.pkl'),'rb') as f:
             self.rtg=pickle.load(f)
-        #with open(os.path.join(config.retrieval_dataset_dir_path,'vectors.pkl'),'rb') as f:
-        #    self.vectors=pickle.load(f)
-        print(f'有{len(self.target_action)}条数据')
-        print('检索数据集加载完毕')
+       
+        print(f'There are {len(self.target_action)} pieces of data')
+        print('Retrieval dataset is loaded')
     def make_retrieval_dataset(self):
 
         data_path=self.config['retrieval_dataset_dir_path']
@@ -123,9 +122,7 @@ class RetrievalRL:
                 rtgs.append(r[:,-1].cpu().numpy())
                 target_actions.append(y)
                 vectors.append(encoded_states)
-                   
-                #target_actions=np.concatenate([target_actions,y[:,-1]],axis=0)
-                #vectors=np.concatenate([vectors,encoded_states],axis=0)
+    
         if not os.path.exists(self.config['index_dir_path']):
             os.makedirs(self.config['index_dir_path'])
         
@@ -136,20 +133,14 @@ class RetrievalRL:
         
         target_actions_path=os.path.join(self.config['index_dir_path'],'target_actions.pkl')
         rtgs_path=os.path.join(self.config['index_dir_path'],'rtgs.pkl')
-        #vectors_path=os.path.join(self.config['retrieval_dataset_dir_path'],'vectors.pkl')
-        
+            
         with open(target_actions_path,'wb') as f:
             pickle.dump(target_actions,f)
         
         with open(rtgs_path,'wb') as f:
             pickle.dump(rtgs,f)
-
-        """ with open(vectors_path,'wb') as f:
-            pickle.dump(vectors,f) """
         
-        #print(f'target_actions保存至 {target_actions_path}')
         vectors=vectors.astype(np.float32)
-        #index=faiss.index_factory(self.dt_config.embed_dim,'Flat',faiss.METRIC_L2) #hidden dim
         if self.index_type=='inner':
             index=faiss.index_factory(self.config['hidden_dim'],'Flat',faiss.METRIC_INNER_PRODUCT) #hidden dim
             normalize_L2(vectors) #正则化
@@ -161,7 +152,7 @@ class RetrievalRL:
         index.add(vectors)
         index_path=os.path.join(self.config['index_dir_path'],f'{self.index_type}.index')
         faiss.write_index(index,index_path) #保存
-        print(f'index保存至 {index_path}')
+        print(f'Index saved to {index_path}')
     
     def get_model_prob(self,states,actions,rtgs,timesteps): #已经截断过的
         probs_list=[]
@@ -170,7 +161,6 @@ class RetrievalRL:
                 logits, _ = model(states, actions=actions, targets=None, rtgs=rtgs, timesteps=timesteps)
                 logits = logits[:, -1, :]
                 prob = F.softmax(logits, dim=-1).cpu().numpy()
-                #prob=get_prob(model,x, 1, temperature, sample, top_k, actions, rtgs, timesteps)
                 probs_list.append(prob)
         probs=np.stack(probs_list,axis=0).reshape(len(self.model_list),-1)
         probs_mean = probs.mean(axis=0) # action取平均
@@ -200,8 +190,7 @@ class RetrievalRL:
         for i in range(D.shape[0]):
             data=RetrievalData(D[i],I[i],self.target_action[I[i]],self.rtg[I[i]])
             retrievals.append(data)
-        #retrievals.sort(key=lambda x:-x.r)
-        #retrievals=retrievals[:20]
+
         weights=np.zeros((len(retrievals)))
         for i,data in enumerate(retrievals):
             weights[i]=1/data.d
@@ -220,7 +209,7 @@ class RetrievalRL:
     
         lamb=self.get_lamb(z)
         self.lamb_list.append(lamb)
-        #return model_prob
+  
         retrieval_prob,is_retrieval=self.get_retrieval_prob(states,actions,rtgs,timesteps)
         if args.retrieval_only:
             return retrieval_prob
@@ -228,12 +217,8 @@ class RetrievalRL:
         if is_retrieval==False:
             return model_prob
         prob=retrieval_prob*lamb+model_prob*(1-lamb)
-        #return retrieval_prob
+    
         return prob
-    """ def get_action(self,prob):
-        action = torch.multinomial(prob, num_samples=1)
-        #action = torch.argmax(prob)
-        return action """
 
 
 parser = argparse.ArgumentParser()
@@ -297,7 +282,7 @@ config={
     "index_type":args.index_type,
     "context_length":context_length,
     "hidden_dim":gpt_config.n_embd,
-    'topk':100
+    'topk':128
 }
 model=RetrievalRL(retrieval_model,model_list,config)
 
@@ -349,20 +334,6 @@ for i in range(eval_num):
         all_states = torch.cat([all_states, state], dim=0)
         rtgs += [rtgs[-1] - reward]
     print('return: ',reward_sum)
-    print('avg lamb: ',model.avg_lamb())
     T_rewards.append(reward_sum)
-import pandas as pd
-if args.model_type=='dt':
-    csv_path='exp/dt_exp.csv'
-elif args.model_type=='bc':
-    csv_path='exp/bc_exp.csv'
-dataframe=pd.read_csv(csv_path)
-dataframe.loc[len(dataframe)]={
-    'game':args.game,
-    'model_num':args.model_num,
-    'mean':np.array(T_rewards).mean(),
-    'std':np.array(T_rewards).std()
-}
-print(np.array(T_rewards).mean())
-print(np.array(T_rewards).std())
-dataframe.to_csv(csv_path,index=False)
+print(f'avg:  {np.array(T_rewards).mean()}')
+

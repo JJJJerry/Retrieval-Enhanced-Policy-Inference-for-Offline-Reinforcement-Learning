@@ -6,7 +6,7 @@ import numpy as np
 import torch
 import pickle
 import sys
-sys.path.append('/data/wangchunhao-slurm/workspace/code/projects/decision-transformer-master/gym/cql/')
+
 from cql.rlkit.torch.sac.policies import TanhGaussianPolicy, MakeDeterministic
 from tqdm import tqdm
 os.environ['D4RL_SUPPRESS_IMPORT_ERROR']='0'

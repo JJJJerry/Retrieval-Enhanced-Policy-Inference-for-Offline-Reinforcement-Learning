@@ -12,7 +12,7 @@ from decision_transformer.models.decision_transformer import DecisionTransformer
 from DecisionTransformerV2 import DecisionTransformerV2,MLPBCModelV2
 from utils import RetrievalData
 import copy
-import sys
+
 
 
 class KNN_DT_Retriever(nn.Module):
@@ -317,10 +317,9 @@ class RetrieverRLV2:
             lamb=self.lamb
         else : 
             model_action,var=self.model.get_action(state) # 返回action和方差
-            
+
             retriever_action,is_retrieval=self.retriever.get_retrieval_action(state)
             retriever_action=retriever_action.reshape(1,-1)
-            return retriever_action
             lamb=self.get_lamb(var)
             
             self.lamb_record.append(lamb)

@@ -10,12 +10,10 @@ from mingpt.trainer_atari import Env,Args
 import argparse
 from mingpt.utils import set_seed
 def get_returns(model,args,device,timesteps,ret):
-    
     model.train(False)
     args=Args(args.game.lower(), args.seed,device)
     env = Env(args)
     env.eval()
-
     T_rewards, T_Qs = [], []
     eval_num=10
     done = True
@@ -28,10 +26,7 @@ def get_returns(model,args,device,timesteps,ret):
             rtgs=torch.tensor(rtgs, dtype=torch.long).to(device).unsqueeze(0).unsqueeze(-1), 
             timesteps=torch.zeros((1, 1, 1), dtype=torch.int64).to(device))
         sampled_action = torch.multinomial(prob, num_samples=1)
-        """ sampled_action = sample(model, state, 1, temperature=1.0, sample=True, actions=None, 
-            rtgs=torch.tensor(rtgs, dtype=torch.long).to(device).unsqueeze(0).unsqueeze(-1), 
-            timesteps=torch.zeros((1, 1, 1), dtype=torch.int64).to(device)) """
-        
+     
         j = 0
         all_states = state
         actions = []
@@ -43,23 +38,15 @@ def get_returns(model,args,device,timesteps,ret):
             state, reward, done = env.step(action)
             reward_sum += reward
             j += 1
-
             if done:
                 T_rewards.append(reward_sum)
                 print(reward_sum)
                 break
-
             state = state.unsqueeze(0).unsqueeze(0).to(device)
-
             all_states = torch.cat([all_states, state], dim=0)
-
             rtgs += [rtgs[-1] - reward]
             # all_states has all previous states and rtgs has all previous rtgs (will be cut to block_size in utils.sample)
             # timestep is just current timestep
-            """ sampled_action = sample(model, all_states.unsqueeze(0), 1, temperature=1.0, sample=True, 
-                actions=torch.tensor(actions, dtype=torch.long).to(device).unsqueeze(1).unsqueeze(0), 
-                rtgs=torch.tensor(rtgs, dtype=torch.long).to(device).unsqueeze(0).unsqueeze(-1), 
-                timesteps=(min(j, max(timesteps)) * torch.ones((1, 1, 1), dtype=torch.int64).to(device))) """
             prob = get_prob(model, all_states.unsqueeze(0), 1, temperature=1.0, sample=True, 
                 actions=torch.tensor(actions, dtype=torch.long).to(device).unsqueeze(1).unsqueeze(0), 
                 rtgs=torch.tensor(rtgs, dtype=torch.long).to(device).unsqueeze(0).unsqueeze(-1), 
@@ -135,21 +122,14 @@ for i in range(eval_num):
                             actions=None, 
             rtgs=torch.tensor(rtgs, dtype=torch.long).to(device).unsqueeze(0).unsqueeze(-1), 
             timesteps=torch.zeros((1, 1, 1), dtype=torch.int64).to(device))
-            sampled_action = torch.multinomial(prob, num_samples=1)
-            """ sampled_action = sample(model, all_states.unsqueeze(0), 1, temperature=1.0, sample=True, 
-            actions=None, 
-            rtgs=torch.tensor(rtgs, dtype=torch.long).to(device).unsqueeze(0).unsqueeze(-1), 
-            timesteps=(min(j, max(timesteps)) * torch.ones((1, 1, 1), dtype=torch.int64).to(device))) """
         else :
             prob = get_prob(model, all_states.unsqueeze(0), 1, temperature=1.0, sample=True, 
                 actions=torch.tensor(actions, dtype=torch.long).to(device).unsqueeze(1).unsqueeze(0), 
                 rtgs=torch.tensor(rtgs, dtype=torch.long).to(device).unsqueeze(0).unsqueeze(-1), 
-                timesteps=(min(j, max(timesteps)) * torch.ones((1, 1, 1), dtype=torch.int64).to(device)))
-            sampled_action = torch.multinomial(prob, num_samples=1)
-            """ sampled_action = sample(model, all_states.unsqueeze(0), 1, temperature=1.0, sample=True, 
-                actions=torch.tensor(actions, dtype=torch.long).to(device).unsqueeze(1).unsqueeze(0), 
-                rtgs=torch.tensor(rtgs, dtype=torch.long).to(device).unsqueeze(0).unsqueeze(-1), 
-                timesteps=(min(j, max(timesteps)) * torch.ones((1, 1, 1), dtype=torch.int64).to(device))) """
+                timesteps=(min(j, max(timesteps)) * torch.ones((1, 1, 1), dtype=torch.int64).to(device)))  
+            
+        sampled_action = torch.multinomial(prob, num_samples=1)
+        
         action = sampled_action.cpu().numpy()[0,-1]
         actions += [sampled_action]
         state, reward, done = env.step(action)
@@ -160,7 +140,7 @@ for i in range(eval_num):
         rtgs += [rtgs[-1] - reward]
     print(reward_sum)
     T_rewards.append(reward_sum)
-print(np.array(T_rewards).mean())
+print(f'avg:  {np.array(T_rewards).mean()}')
 
 
 

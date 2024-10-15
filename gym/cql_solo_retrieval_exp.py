@@ -7,7 +7,6 @@ import torch
 import pickle
 import sys
 from retrieverV2 import ManyModel,RetrieverRLV2,KNN_DT_Retriever
-sys.path.append('/data/wangchunhao-slurm/workspace/code/projects/decision-transformer-master/gym/cql/')
 from cql.rlkit.torch.sac.policies import TanhGaussianPolicy, MakeDeterministic
 
 from tqdm import tqdm

@@ -80,10 +80,9 @@ class RetrievalRL:
         self.action_space=max(self.target_action)[0]
         with open(os.path.join(config['index_dir_path'],'rtgs.pkl'),'rb') as f:
             self.rtg=pickle.load(f)
-        #with open(os.path.join(config.retrieval_dataset_dir_path,'vectors.pkl'),'rb') as f:
-        #    self.vectors=pickle.load(f)
-        print(f'有{len(self.target_action)}条数据')
-        print('检索数据集加载完毕')
+     
+        print(f'There are {len(self.target_action)} pieces of data')
+        print('Retrieval dataset is loaded')
     def make_retrieval_dataset(self):
 
         data_path=self.config['retrieval_dataset_dir_path']
@@ -114,7 +113,7 @@ class RetrievalRL:
         rtgs=[]
         for (x, y, r, t) in tqdm(loader):
             with torch.no_grad():
-                #length=np.random.randint(1,args.context_length)
+    
                 x = x.to(self.config['device'])
                 y = y.to(self.config['device'])
                 r = r.to(self.config['device'])
@@ -124,10 +123,8 @@ class RetrievalRL:
                 y=y.cpu().numpy()[:,-1]
                 rtgs.append(r[:,-1].cpu().numpy())
                 target_actions.append(y)
-                vectors.append(encoded_states)
-                   
-                #target_actions=np.concatenate([target_actions,y[:,-1]],axis=0)
-                #vectors=np.concatenate([vectors,encoded_states],axis=0)
+                vectors.append(encoded_states)         
+     
         if not os.path.exists(self.config['index_dir_path']):
             os.makedirs(self.config['index_dir_path'])
         
@@ -138,20 +135,15 @@ class RetrievalRL:
         
         target_actions_path=os.path.join(self.config['index_dir_path'],'target_actions.pkl')
         rtgs_path=os.path.join(self.config['index_dir_path'],'rtgs.pkl')
-        #vectors_path=os.path.join(self.config['retrieval_dataset_dir_path'],'vectors.pkl')
+      
         
         with open(target_actions_path,'wb') as f:
             pickle.dump(target_actions,f)
         
         with open(rtgs_path,'wb') as f:
             pickle.dump(rtgs,f)
-
-        """ with open(vectors_path,'wb') as f:
-            pickle.dump(vectors,f) """
-        
-        #print(f'target_actions保存至 {target_actions_path}')
         vectors=vectors.astype(np.float32)
-        #index=faiss.index_factory(self.dt_config.embed_dim,'Flat',faiss.METRIC_L2) #hidden dim
+ 
         if self.index_type=='inner':
             index=faiss.index_factory(self.config['hidden_dim'],'Flat',faiss.METRIC_INNER_PRODUCT) #hidden dim
             normalize_L2(vectors) #正则化
@@ -163,22 +155,22 @@ class RetrievalRL:
         index.add(vectors)
         index_path=os.path.join(self.config['index_dir_path'],f'{self.index_type}.index')
         faiss.write_index(index,index_path) #保存
-        print(f'index保存至 {index_path}')
+        print(f'Index saved to {index_path}')
     
     def get_model_prob(self,states): #已经截断过的
         probs_list=[]
         state_now=states[:,-1].detach().cpu().numpy().reshape(1,4,84,84)
        
         for model in self.model_list:
-            #model_value=[model.predict_value(state_now,torch.tensor(i))[0] for i in range(self.action_space+1)]
-            #model_value=np.array(model_value)
-            #model_value_norm=model_value/max(np.abs(np.max(model_value)),np.abs(np.min(model_value)))
-            #model_value_norm=model_value/model_value.mean()
-            #prob = np.exp(model_value_norm)
-            #prob /=prob.sum()
-            prob = np.zeros(self.action_space+1)
-            action = model.predict(state_now)[0]
-            prob[action]=1
+            model_value=[model.predict_value(state_now,torch.tensor(i))[0] for i in range(self.action_space+1)]
+            model_value=np.array(model_value)
+            model_value_norm=model_value/max(np.abs(np.max(model_value)),np.abs(np.min(model_value)))
+            model_value_norm=model_value/model_value.mean()
+            prob = np.exp(model_value_norm)
+            prob /=prob.sum()
+            #prob = np.zeros(self.action_space+1)
+            #action = model.predict(state_now)[0]
+            #prob[action]=1
             probs_list.append(prob)
         probs=np.stack(probs_list,axis=0).reshape(len(self.model_list),-1)
         probs_mean = probs.mean(axis=0) # action取平均
@@ -209,8 +201,6 @@ class RetrievalRL:
         for i in range(D.shape[0]):
             data=RetrievalData(D[i],I[i],self.target_action[I[i]],self.rtg[I[i]])
             retrievals.append(data)
-        #retrievals.sort(key=lambda x:-x.r)
-        #retrievals=retrievals[:20]
         weights=np.zeros((len(retrievals)))
         for i,data in enumerate(retrievals):
             weights[i]=1/(data.d+1e-5)
@@ -238,10 +228,6 @@ class RetrievalRL:
         
         prob=retrieval_prob*lamb+model_prob*(1-lamb)
         return prob
-    """ def get_action(self,prob):
-        action = torch.multinomial(prob, num_samples=1)
-        #action = torch.argmax(prob)
-        return action """
 
 
 parser = argparse.ArgumentParser()
@@ -272,7 +258,6 @@ set_seed(args.seed)
 model_list=[]
 
 
-
 gpt_config_path=os.path.join('weights',args.game,'gpt_config.pkl')
 with open(gpt_config_path,'rb') as f:
     gpt_config = pickle.load(f)
@@ -290,24 +275,17 @@ with open(f'd3rl_dataset_cache/{game}_env.pkl','rb') as f:
     env=pickle.load(f)
 
 for i in range(args.model_num):
-    if args.game=='Breakout':
-        cql=d3rlpy.algos.DiscreteCQLConfig(
-        learning_rate=5e-5,
-        optim_factory=d3rlpy.models.optimizers.AdamFactory(eps=1e-2 / 32),
-        batch_size=32,
-        alpha=4.0,
-        q_func_factory=d3rlpy.models.q_functions.QRQFunctionFactory(
-            n_quantiles=200
-        ),
-        observation_scaler=d3rlpy.preprocessing.PixelObservationScaler(),
-        target_update_interval=2000,
-        reward_scaler=d3rlpy.preprocessing.ClipRewardScaler(-1.0, 1.0),
-    ).create(device=args.device)
-    else :
-        cql = d3rlpy.algos.DiscreteCQLConfig(
-        observation_scaler=d3rlpy.preprocessing.PixelObservationScaler(),
-        reward_scaler=d3rlpy.preprocessing.ClipRewardScaler(-1.0, 1.0),
-        ).create(device=device)
+    cql=d3rlpy.algos.DiscreteCQLConfig(
+    learning_rate=5e-5,
+    optim_factory=d3rlpy.models.optimizers.AdamFactory(eps=1e-2 / 32),
+    batch_size=32,
+    alpha=4.0,
+    q_func_factory=d3rlpy.models.q_functions.QRQFunctionFactory(
+        n_quantiles=200
+    ),
+    observation_scaler=d3rlpy.preprocessing.PixelObservationScaler(),
+    target_update_interval=2000,
+    reward_scaler=d3rlpy.preprocessing.ClipRewardScaler(-1.0, 1.0),).create(device=args.device)
     cql.build_with_dataset(dataset)
     cql.build_with_env(env)
     cql.load_model(f'cql_weights/{game}/cql_{game}_{i}.pt')
@@ -326,7 +304,6 @@ config={
 }
 model=RetrievalRL(retrieval_model,model_list,config)
 
-
 ret=target_return
 T_rewards, T_Qs = [], []
 done = True
@@ -342,7 +319,7 @@ for i in range(eval_num):
     j=0
     reward_sum=0
     while not done:
-
+        
         prob = model.get_prob(
             all_states[-context_length:].unsqueeze(0),
             actions=torch.tensor(actions[-context_length:], dtype=torch.long).to(device).unsqueeze(1).unsqueeze(0), 
@@ -364,17 +341,6 @@ for i in range(eval_num):
         all_states = torch.cat([all_states, state], dim=0)
         rtgs += [rtgs[-1] - reward]
     print('return: ',reward_sum)
-    print('avg lamb: ',model.avg_lamb())
     T_rewards.append(reward_sum)
-import pandas as pd
-csv_path='exp/cql_exp.csv'
-dataframe=pd.read_csv(csv_path)
-dataframe.loc[len(dataframe)]={
-    'game':args.game,
-    'model_num':args.model_num,
-    'mean':np.array(T_rewards).mean(),
-    'std':np.array(T_rewards).std()
-}
-print(np.array(T_rewards).mean())
-print(np.array(T_rewards).std())
-dataframe.to_csv(csv_path,index=False)
+print(f'avg:  {np.array(T_rewards).mean()}')
+

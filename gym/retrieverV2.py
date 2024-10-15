@@ -7,16 +7,15 @@ from torch import nn as nn
 from torch.utils.data.dataloader import DataLoader
 import faiss
 from faiss import normalize_L2
-from KNN_DT.utils import DT_Dataset
+from dataset import DT_Dataset
 from decision_transformer.models.decision_transformer import DecisionTransformer
 from DecisionTransformerV2 import DecisionTransformerV2,MLPBCModelV2
 from utils import RetrievalData
 import copy
 import sys
-sys.path.append('/data/wangchunhao-slurm/workspace/code/projects/decision-transformer-master/gym/cql/')
-sys.path.append('/data/wangchunhao-slurm/workspace/code/projects/decision-transformer-master/gym/bear/')
+
 from cql.rlkit.torch.sac.policies import TanhGaussianPolicy,MakeDeterministic
-from bear.algos import BEAR
+
 
 
 class KNN_DT_Retriever(nn.Module):
@@ -289,7 +288,7 @@ class ManyModel:
         #std = actions.std(axis=0) # 算标准差
         actions_mean = actions.mean(axis=0) # action取平均
         actions_norm = actions/(np.linalg.norm(actions,axis=1).reshape(-1,1))
-        mean = actions_norm.mean(axis=0) 
+        mean = actions_norm.mean(axis=0)
         z_scores = np.abs(actions_norm-mean).mean(axis=0).sum()
         
         return actions_mean,z_scores
