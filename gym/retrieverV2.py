@@ -277,8 +277,6 @@ class ManyModel:
         for model in self.model_list:
             if type(model) ==MakeDeterministic:
                 a=model.get_action(state)[0].reshape(-1) # cql 
-            elif type(model) == BEAR: 
-                a=model.get_action(state).reshape(-1) # bear
             elif type(model) == DecisionTransformerV2 or type(model)==MLPBCModelV2:
                 a=model.get_action(state).reshape(-1) # dt
 

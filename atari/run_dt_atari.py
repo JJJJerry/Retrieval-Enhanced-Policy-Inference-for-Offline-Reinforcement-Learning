@@ -140,7 +140,7 @@ if os.path.exists(dt_path):
     print(f'load model from {dt_path}')
 device=args.device
 # initialize a trainer instance and kick off training
-print('开始train')
+print('start training')
 epochs = args.epochs
 tconf = TrainerConfig(max_epochs=epochs, batch_size=args.batch_size, learning_rate=6e-4,
                       lr_decay=True, warmup_tokens=512*20, final_tokens=2*len(train_dataset)*args.context_length*3,

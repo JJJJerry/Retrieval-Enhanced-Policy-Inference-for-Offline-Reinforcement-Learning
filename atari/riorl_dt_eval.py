@@ -2,7 +2,6 @@ import os
 import argparse
 import pickle
 from mingpt.model_atari import GPT
-from mingpt.model_atari import GPTConfig
 from mingpt.utils import set_seed,get_prob,sample
 import torch
 import numpy as np
@@ -70,7 +69,7 @@ class RetrievalRL:
         res = faiss.StandardGpuResources()
         self.index=faiss.read_index(index_path)
         try:
-            self.index=faiss.index_cpu_to_gpu(res, int(self.device[-1]), self.index) #使用faiss-gpu
+            self.index=faiss.index_cpu_to_gpu(res, int(self.device[-1]), self.index) 
         except:
             print('index to gpu error')
         
@@ -111,7 +110,7 @@ class RetrievalRL:
         rtgs=[]
         for (x, y, r, t) in tqdm(loader):
             with torch.no_grad():
-                #length=np.random.randint(1,args.context_length)
+              
                 x = x.to(self.config['device'])
                 y = y.to(self.config['device'])
                 r = r.to(self.config['device'])
@@ -143,7 +142,7 @@ class RetrievalRL:
         vectors=vectors.astype(np.float32)
         if self.index_type=='inner':
             index=faiss.index_factory(self.config['hidden_dim'],'Flat',faiss.METRIC_INNER_PRODUCT) #hidden dim
-            normalize_L2(vectors) #正则化
+            normalize_L2(vectors) 
         elif self.index_type=='l2':
             index=faiss.index_factory(self.config['hidden_dim'],'Flat',faiss.METRIC_L2) #hidden dim
         else :
@@ -151,10 +150,10 @@ class RetrievalRL:
 
         index.add(vectors)
         index_path=os.path.join(self.config['index_dir_path'],f'{self.index_type}.index')
-        faiss.write_index(index,index_path) #保存
+        faiss.write_index(index,index_path) 
         print(f'Index saved to {index_path}')
     
-    def get_model_prob(self,states,actions,rtgs,timesteps): #已经截断过的
+    def get_model_prob(self,states,actions,rtgs,timesteps): 
         probs_list=[]
         with torch.no_grad():
             for model in self.model_list:
@@ -163,7 +162,7 @@ class RetrievalRL:
                 prob = F.softmax(logits, dim=-1).cpu().numpy()
                 probs_list.append(prob)
         probs=np.stack(probs_list,axis=0).reshape(len(self.model_list),-1)
-        probs_mean = probs.mean(axis=0) # action取平均
+        probs_mean = probs.mean(axis=0) 
         probs_norm = probs/(np.linalg.norm(probs,axis=1).reshape(-1,1))
         mean = probs_norm.mean(axis=0) 
         z_scores = np.abs(probs_norm-mean).mean(axis=0).sum()
@@ -180,9 +179,6 @@ class RetrievalRL:
        
         I=I[0] 
         D=D[0]
-        
-        # I=I[D<0.1]
-        # D=D[D<0.1]
         
         if D.shape[0]==0:
             return knn_probs,False
