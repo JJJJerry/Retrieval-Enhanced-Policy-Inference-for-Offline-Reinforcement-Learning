@@ -1,4 +1,4 @@
-# Conservative Q-Learning  (CQL)
+# Conservative Q-Learning (CQL)
 for seed in 123 231 312 132
 do
     python d3rl_train_cql.py --seed $seed --game 'Breakout'

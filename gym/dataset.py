@@ -27,7 +27,7 @@ def traj2dataset(trajectory):
         rewards.append(traj['rewards'])
         timesteps.append(np.arange(0,traj_len))
         done_idx_now+=traj_len
-        done_idxs.append(done_idx_now) #traj的最大时间步+1
+        done_idxs.append(done_idx_now) 
         
         
     states=np.concatenate(states,axis=0)

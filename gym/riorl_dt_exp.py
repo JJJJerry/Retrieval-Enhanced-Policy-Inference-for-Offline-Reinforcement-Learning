@@ -1,6 +1,6 @@
 import argparse
 import os
-#import d4rl
+import d4rl
 import gym
 import numpy as np
 import pickle
@@ -56,11 +56,6 @@ elif args.env.find('walker2d')!=-1:
     env = gym.make('Walker2d-v3')
     target_return = 5000
     scale=1000
-    
-elif args.env.find('antmaze')!=-1:
-    env = gym.make('antmaze-medium-play-v0')
-    target_return = 1
-    scale=1
 
 state_dim=env.observation_space.shape[0]
 act_dim=env.action_space.shape[0]
@@ -110,22 +105,12 @@ model=RetrieverRLV2(retriever=retriever,model=model,lamb=None,solo=False,retriev
 
 
 r_list=[]
-for i in tqdm(range(10)):
+for i in tqdm(range(100)):
     r=eval_model(env,model,1000)
     r_list.append(r)
     print(np.array(model.lamb_record).mean())
     model.lamb_record=[]
     print(r)
 print(np.array(model.lamb_record).mean())
-print(f'平均returns: {np.array(r_list).mean()}')
+print(f'avg: returns: {np.array(r_list).mean()}')
 print(f'SE: {np.array(r_list).std()}')
-
-csv_path='dt_exp.csv'
-data=pd.read_csv(csv_path)
-data.loc[len(data)]={
-    'env':args.env,
-    'index_type':args.index_type,
-    'topk':args.topk,
-    'mean_return':np.array(r_list).mean()
-}
-data.to_csv(csv_path,index=False)

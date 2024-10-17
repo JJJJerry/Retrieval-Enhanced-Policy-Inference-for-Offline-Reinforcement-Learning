@@ -112,8 +112,7 @@ class DecisionTransformer(TrajectoryModel):
         state_embeddings = self.embed_state(states)
         action_embeddings = self.embed_action(actions)
         returns_embeddings = self.embed_return(returns_to_go)
-        time_embeddings = self.embed_timestep(timesteps)*0.1
-        #time_embeddings = self.embed_timestep(timesteps)
+        time_embeddings = self.embed_timestep(timesteps)*0.1 # scale
 
         # time embeddings are treated similar to positional embeddings
         state_embeddings = state_embeddings + time_embeddings
@@ -140,15 +139,7 @@ class DecisionTransformer(TrajectoryModel):
             attention_mask=stacked_attention_mask,
         )
         x = transformer_outputs['last_hidden_state']
-        #x = x.mean(axis=1) 
-        #x = x.reshape(batch_size, seq_length, 3, self.hidden_size).permute(0, 2, 1, 3)
-        #x = x[:,1] #(batch_size,maxlen,hidden_dim)
-        #x = x[:,-14::3]
-        #x = x.mean(axis=1)
-        x = x[:,-2]
-        #x = x[:,-29::3].mean(axis=1)
-        #x = x[:,-8::3].mean(axis=1) #原来是 x = x[:,-2] 2024.5.6
-        # x = x[:,::].mean(axis=1)
+        x = x[:,-2] 
         return x
     def get_action(self, states, actions, rewards, returns_to_go, timesteps, **kwargs):
         # we don't care about the past rewards in this model

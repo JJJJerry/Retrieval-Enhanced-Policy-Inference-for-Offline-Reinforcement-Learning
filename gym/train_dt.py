@@ -274,7 +274,6 @@ def experiment(
 
     for iter in range(variant['max_iters']):
         outputs = trainer.train_iteration(num_steps=variant['num_steps_per_iter'], iter_num=iter+1, print_logs=True)
-        #if(outputs['evaluation/target_3600_return_mean']>=2000):
         torch.save(model.state_dict(),f'weights/{env_name}-{dataset}-v2/{env_name}-{dataset}-v2_{seed}.pt')
             
         

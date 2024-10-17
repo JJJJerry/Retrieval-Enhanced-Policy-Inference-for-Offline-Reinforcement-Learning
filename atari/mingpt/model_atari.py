@@ -321,7 +321,6 @@ class GPT(nn.Module):
 
         x = self.drop(token_embeddings + position_embeddings)
         x = self.blocks(x)
-        x = self.ln_f(x)
     
         return x.mean(axis=1)
     

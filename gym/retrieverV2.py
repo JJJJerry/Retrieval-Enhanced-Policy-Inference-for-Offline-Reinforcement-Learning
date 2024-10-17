@@ -75,7 +75,7 @@ class KNN_DT_Retriever(nn.Module):
             self.state=pickle.load(f)
         with open(os.path.join(self.index_dir_path,'input_data.pkl'),'rb') as f:
             self.input_data=pickle.load(f)
-        print(f'有{len(self.target_action)}条数据')
+        print(f'there are {len(self.target_action)} pieces of data')
         print('检索数据集加载完毕')
     def check_retrieval_dataset(self,retrieval_dataset_dir_path):
         if not os.path.exists(retrieval_dataset_dir_path):

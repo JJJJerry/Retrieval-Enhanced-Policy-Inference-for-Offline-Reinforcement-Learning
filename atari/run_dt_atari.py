@@ -128,16 +128,21 @@ mconf = GPTConfig(train_dataset.vocab_size, train_dataset.block_size,
                   n_layer=6, n_head=8, n_embd=128, model_type=args.model_type, max_timestep=max(timesteps))
 model = GPT(mconf)
 dt_path=os.path.join('weights',args.game,f'{args.game}_{args.seed}.pt')
+
+
 if args.model_type=='naive':
-    with open(os.path.join('bc_weights',args.game,'gpt_config.pkl'),'wb') as f:
+    config_dir=os.path.join('bc_weights',args.game)
+    if not os.path.exists(config_dir):
+        os.makedirs(config_dir)
+    with open(os.path.join(config_dir,'gpt_config.pkl'),'wb') as f:
         pickle.dump(mconf,f)
 elif args.model_type=='reward_conditioned':
-    with open(os.path.join('weights',args.game,'gpt_config.pkl'),'wb') as f:
+    config_dir=os.path.join('weights',args.game)
+    if not os.path.exists(config_dir):
+        os.makedirs(config_dir)
+    with open(os.path.join(config_dir,'gpt_config.pkl'),'wb') as f:
         pickle.dump(mconf,f)
 
-if os.path.exists(dt_path):
-    model.load_state_dict(torch.load(dt_path,map_location='cpu'))
-    print(f'load model from {dt_path}')
 device=args.device
 # initialize a trainer instance and kick off training
 print('start training')

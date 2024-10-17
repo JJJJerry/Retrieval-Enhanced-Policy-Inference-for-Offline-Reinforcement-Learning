@@ -30,16 +30,16 @@ sh train_bc.sh
 
 Decision Transformer
 ```shell
-python riorl_dt_eval.py --game Qbert
+python riorl_dt_exp.py --game Qbert
 ```
 
 Conservative Q-Learning
 ```shell
-python riorl_cql_eval.py --game Breakout
+python riorl_cql_exp.py --game Breakout
 ```
 
 Behavior Cloning
 ```shell
-python riorl_dt_eval.py --game Breakout
+python riorl_dt_exp.py --game Breakout
 ```
 

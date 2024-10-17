@@ -32,9 +32,7 @@ class Trainer:
             train_losses.append(train_loss)
             if self.scheduler is not None:
                 self.scheduler.step()
-        #torch.save(self.model.state_dict(),f'weights/dt.pt')
-        print('training is over!')
-        #开始eval
+        
         logs['time/training'] = time.time() - train_start
 
         eval_start = time.time()

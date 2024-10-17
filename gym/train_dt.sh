@@ -1,20 +1,46 @@
 # Decision Transformer (DT)
-for seed in 123 231 312 132
+for seed in 0 1 2 3
 do
-    python run_dt_atari.py --seed $seed --context_length 30 --epochs 5 --model_type 'reward_conditioned' --num_steps 500000 --num_buffers 50 --game 'Breakout' --batch_size 128
+    python train_dt.py --seed $seed --env hopper --dataset medium --model_type dt
 done
 
-for seed in 123 231 312 132
+for seed in 0 1 2 3
 do
-    python run_dt_atari.py --seed $seed --context_length 30 --epochs 5 --model_type 'reward_conditioned' --num_steps 500000 --num_buffers 50 --game 'Qbert' --batch_size 128
+    python train_dt.py --seed $seed --env hopper --dataset medium-replay --model_type dt
 done
 
-for seed in 123 231 312 132
+for seed in 0 1 2 3
 do
-    python run_dt_atari.py --seed $seed --context_length 50 --epochs 5 --model_type 'reward_conditioned' --num_steps 500000 --num_buffers 50 --game 'Pong' --batch_size 512
+    python train_dt.py --seed $seed --env hopper --dataset medium-expert --model_type dt
 done
 
-for seed in 123 231 312 132
+for seed in 0 1 2 3
 do
-    python run_dt_atari.py --seed $seed --context_length 30 --epochs 5 --model_type 'reward_conditioned' --num_steps 500000 --num_buffers 50 --game 'Seaquest' --batch_size 128
+    python train_dt.py --seed $seed --env halfcheetah --dataset medium --model_type dt
+done
+
+for seed in 0 1 2 3
+do
+    python train_dt.py --seed $seed --env halfcheetah --dataset medium-replay --model_type dt
+done
+
+for seed in 0 1 2 3
+do
+    python train_dt.py --seed $seed --env halfcheetah --dataset medium-expert --model_type dt
+done
+
+
+for seed in 0 1 2 3
+do
+    python train_dt.py --seed $seed --env walker2d --dataset medium --model_type dt
+done
+
+for seed in 0 1 2 3
+do
+    python train_dt.py --seed $seed --env walker2d --dataset medium-replay --model_type dt
+done
+
+for seed in 0 1 2 3
+do
+    python train_dt.py --seed $seed --env walker2d --dataset medium-expert --model_type dt
 done

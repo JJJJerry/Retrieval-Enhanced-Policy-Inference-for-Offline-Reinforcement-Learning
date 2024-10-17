@@ -38,6 +38,7 @@ parser.add_argument('--env', type=str, default='hopper-medium-v2')
 parser.add_argument('--index_type', type=str, default='inner') #l2,inner
 parser.add_argument('--device', type=str, default='cuda:0')
 parser.add_argument('--retrieval_only', action='store_true')
+parser.add_argument('--topk', type=int, default=128)
 parser.add_argument('--model_num', type=int, default=4)
 args = parser.parse_args()
 if args.env.find('hopper')!=-1:
@@ -54,11 +55,7 @@ elif args.env.find('walker2d')!=-1:
     env = gym.make('Walker2d-v3')
     target_return = 5000
     scale=1000
-    
-elif args.env.find('antmaze')!=-1:
-    env = gym.make('antmaze-medium-play-v0')
-    target_return = 1
-    scale=1
+
 
 state_dim=env.observation_space.shape[0]
 act_dim=env.action_space.shape[0]
@@ -83,7 +80,7 @@ kwargs={
 'dropout':0.1,
 'device':args.device,
 'scale':scale,
-'topk':100,
+'topk':args.topk,
 'dataset_path':f'data/{args.env}.pkl',
 'target_return':target_return,
 'states_mean':states_mean,
@@ -107,19 +104,10 @@ model=RetrieverRLV2(retriever=retriever,model=model,lamb=None,solo=False,retriev
 
 
 r_list=[]
-for i in tqdm(range(20)):
+for i in tqdm(range(100)):
     r=eval_model(env,model,1000)
     r_list.append(r)
     print(r)
     print(np.array(model.lamb_record).mean())
     model.lamb_record=[]
-print(f'平均returns: {np.array(r_list).mean()}')
-
-csv_path='bc_exp.csv'
-data=pd.read_csv(csv_path)
-data.loc[len(data)]={
-    'env':args.env,
-    'mean_return':np.array(r_list).mean(),
-    'model_num':args.model_num
-}
-data.to_csv(csv_path,index=False)
+print(f'avg returns: {np.array(r_list).mean()}')

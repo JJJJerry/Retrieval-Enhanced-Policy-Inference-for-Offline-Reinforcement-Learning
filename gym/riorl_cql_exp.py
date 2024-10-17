@@ -41,6 +41,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--env', type=str, default='hopper-medium-replay-v2')
 parser.add_argument('--index_type', type=str, default='inner')
 parser.add_argument('--retrieval_only', action='store_true')
+parser.add_argument('--topk', type=int, default=128)
 parser.add_argument('--device', type=str, default='cuda:0')
 parser.add_argument('--model_num', type=int, default=4)
 args = parser.parse_args()
@@ -58,11 +59,7 @@ elif args.env.find('walker2d')!=-1:
     env = gym.make('Walker2d-v3')
     target_return = 5000
     scale=1000
-    
-elif args.env.find('antmaze')!=-1:
-    env = gym.make('antmaze-medium-play-v0')
-    target_return = 1
-    scale=1
+
 
 state_dim=env.observation_space.shape[0]
 act_dim=env.action_space.shape[0]
@@ -87,7 +84,7 @@ kwargs={
 'dropout':0.1,
 'device':args.device,
 'scale':scale,
-'topk':100,
+'topk':args.topk,
 'dataset_path':f'data/{args.env}.pkl',
 'target_return':target_return,
 'states_mean':states_mean,
@@ -121,16 +118,9 @@ retriever=KNN_DT_Retriever(dt_weight_path,index_dir_path,args.index_type,**kwarg
 model=RetrieverRLV2(retriever=retriever,model=model,lamb=None,solo=False,retrieval_only=args.retrieval_only,kwargs=kwargs)
 
 r_list=[]
-for i in tqdm(range(20)):
+for i in tqdm(range(100)):
     r=eval_model(env,model,1000)
     r_list.append(r)
     print(r)
 print(np.array(model.lamb_record).mean())
 print(f'平均returns: {np.array(r_list).mean()}')
-data=pd.read_csv('cql_exp.csv')
-data.loc[len(data)]={
-    'env':args.env,
-    'mean_return':np.array(r_list).mean(),
-    'model_num':args.model_num
-}
-data.to_csv('cql_exp.csv',index=False)
