@@ -146,7 +146,7 @@ class RetrievalRL:
  
         if self.index_type=='inner':
             index=faiss.index_factory(self.config['hidden_dim'],'Flat',faiss.METRIC_INNER_PRODUCT) #hidden dim
-            normalize_L2(vectors) #正则化
+            normalize_L2(vectors) 
         elif self.index_type=='l2':
             index=faiss.index_factory(self.config['hidden_dim'],'Flat',faiss.METRIC_L2) #hidden dim
         else :
@@ -154,10 +154,10 @@ class RetrievalRL:
 
         index.add(vectors)
         index_path=os.path.join(self.config['index_dir_path'],f'{self.index_type}.index')
-        faiss.write_index(index,index_path) #保存
+        faiss.write_index(index,index_path) 
         print(f'Index saved to {index_path}')
     
-    def get_model_prob(self,states): #已经截断过的
+    def get_model_prob(self,states): 
         probs_list=[]
         state_now=states[:,-1].detach().cpu().numpy().reshape(1,4,84,84)
        

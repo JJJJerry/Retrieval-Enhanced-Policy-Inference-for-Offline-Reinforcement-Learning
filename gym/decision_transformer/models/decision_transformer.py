@@ -5,7 +5,7 @@ import copy
 import transformers
 
 from decision_transformer.models.model import TrajectoryModel
-from decision_transformer.models.trajectory_gpt2 import GPT2Model #和原版GPT2相比删掉了postional embedding
+from decision_transformer.models.trajectory_gpt2 import GPT2Model 
 
 
 class DecisionTransformer(TrajectoryModel):
@@ -58,7 +58,7 @@ class DecisionTransformer(TrajectoryModel):
     
         if attention_mask is None:
             # attention mask for GPT: 1 if can be attended to, 0 if not
-            attention_mask = torch.ones((batch_size, seq_length), dtype=torch.long) #为0的是padding
+            attention_mask = torch.ones((batch_size, seq_length), dtype=torch.long) 
 
         # embed each modality with a different head
         state_embeddings = self.embed_state(states)
@@ -101,13 +101,12 @@ class DecisionTransformer(TrajectoryModel):
         action_preds = self.predict_action(x[:,1])  # predict next action given state
         
         return state_preds, action_preds, return_preds
-    def encode(self,states, actions, rewards, returns_to_go, timesteps, attention_mask=None): #这个是后来加的函数，用来提取表征，seq2vec
+    def encode(self,states, actions, rewards, returns_to_go, timesteps, attention_mask=None): 
         batch_size, seq_length = states.shape[0], states.shape[1]
         
         if attention_mask is None:
             # attention mask for GPT: 1 if can be attended to, 0 if not
-            attention_mask = torch.ones((batch_size, seq_length), dtype=torch.long) #为0的是padding
-
+            attention_mask = torch.ones((batch_size, seq_length), dtype=torch.long) 
         # embed each modality with a different head
         state_embeddings = self.embed_state(states)
         action_embeddings = self.embed_action(actions)

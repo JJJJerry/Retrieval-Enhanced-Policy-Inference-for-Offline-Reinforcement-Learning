@@ -51,7 +51,7 @@ class DecisionTransformerV2:
         
         states = (states-self.kwargs['states_mean'])/self.kwargs['states_std']
         actions = np.concatenate([np.array(self.history['actions']).reshape(-1,self.kwargs['act_dim']), np.zeros((1, self.kwargs['act_dim']))], axis=0)
-        # rewards不需要
+        # not need rewards
         rewards = np.concatenate([np.array(self.history['rewards']).reshape(-1,1), np.zeros((1,1))], axis=0) 
         rtgs = np.stack(self.history['rtgs'], axis=0,dtype=np.float32)
         rtgs/=self.kwargs['scale']

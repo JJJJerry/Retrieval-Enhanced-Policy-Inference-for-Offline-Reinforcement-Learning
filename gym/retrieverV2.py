@@ -41,7 +41,7 @@ class KNN_DT_Retriever(nn.Module):
         self.kwargs=kwargs
         self.maxlen=kwargs['K']
         self.device=kwargs['device']
-        print(f'检索dt权重路径: {dt_weight_path}')
+        print(f'DT encoder path: {dt_weight_path}')
         self.dt.load_state_dict(torch.load(dt_weight_path,map_location=torch.device('cpu')))
         self.dt.to(self.device)
         self.dt.eval()
@@ -56,7 +56,7 @@ class KNN_DT_Retriever(nn.Module):
         index_dir_path=os.path.join(self.index_dir_path,f'{self.index_type}.index')
         
         res = faiss.StandardGpuResources()
-        print(f'索引文件夹：{index_dir_path}')
+        print(f'index dir: {index_dir_path}')
         self.index=faiss.read_index(index_dir_path)
         try:
             self.index=faiss.index_cpu_to_gpu(res, int(self.device[-1]), self.index) #使用faiss-gpu
@@ -76,15 +76,15 @@ class KNN_DT_Retriever(nn.Module):
         with open(os.path.join(self.index_dir_path,'input_data.pkl'),'rb') as f:
             self.input_data=pickle.load(f)
         print(f'there are {len(self.target_action)} pieces of data')
-        print('检索数据集加载完毕')
+        print('retrieval dataset is loaded over')
     def check_retrieval_dataset(self,retrieval_dataset_dir_path):
         if not os.path.exists(retrieval_dataset_dir_path):
-            print(f'未找到检索数据集')
+            print(f'retrieval dataset not found')
             self.make_retrieval_dataset()   
     def make_retrieval_dataset(self):
-        print('正在创建检索数据集')
+        print('creating retrieval dataset ...')
         with open(self.kwargs['dataset_path'], 'rb') as f:
-            print(f'检索数据集来自于 {self.kwargs["dataset_path"]}')
+            print(f'retrieval dataset: {self.kwargs["dataset_path"]}')
             trajectories = pickle.load(f)
             
         #vectors=np.empty((0,self.dt_config.embed_dim))
@@ -105,7 +105,7 @@ class KNN_DT_Retriever(nn.Module):
         dataset=DT_Dataset(trajectories,self.maxlen)
         
         loader=DataLoader(dataset,batch_size=512,shuffle=False,num_workers=6,pin_memory=True)
-        print('Dataloader创建完毕')
+        print('Dataloader is created')
         for (state, action, rtg, timestep, mask, info) in tqdm(loader):
             with torch.no_grad():
                 input_data['states'].append(state)
@@ -151,7 +151,7 @@ class KNN_DT_Retriever(nn.Module):
         input_data['timesteps']=np.concatenate(input_data['timesteps'],axis=0)
         input_data['masks']=np.concatenate(input_data['masks'],axis=0)
         
-        print('数据加载完毕')           
+        print('Data is loaded ')           
         if not os.path.exists(self.index_dir_path):
             os.makedirs(self.index_dir_path)
         
@@ -176,13 +176,13 @@ class KNN_DT_Retriever(nn.Module):
             pickle.dump(timesteps,f)
         with open(rtgs_path,'wb') as f:
             pickle.dump(rtgs,f)
-        #print(f'target_actions保存至 {target_actions_path}')
+    
         
         vectors=vectors.astype(np.float32)
         #index=faiss.index_factory(self.dt_config.embed_dim,'Flat',faiss.METRIC_L2) #hidden dim
         if self.index_type=='inner':
             index=faiss.index_factory(self.kwargs['embed_dim'],'Flat',faiss.METRIC_INNER_PRODUCT) #hidden dim
-            normalize_L2(vectors) #正则化
+            normalize_L2(vectors) 
         elif self.index_type=='l2':
             index=faiss.index_factory(self.kwargs['embed_dim'],'Flat',faiss.METRIC_L2) #hidden dim
         else :
@@ -190,7 +190,7 @@ class KNN_DT_Retriever(nn.Module):
 
         index.add(vectors)
         index_path=os.path.join(self.index_dir_path,f'{self.index_type}.index')
-        faiss.write_index(index,index_path) #保存
+        faiss.write_index(index,index_path) 
         print(f'index保存至 {index_path}')
     def reset(self):
         self.history={
@@ -216,7 +216,7 @@ class KNN_DT_Retriever(nn.Module):
         states = np.stack(self.history['states'])
         states = (states-self.kwargs['states_mean'])/self.kwargs['states_std']
         actions = np.concatenate([np.array(self.history['actions']).reshape(-1,self.act_dim), np.zeros((1, self.act_dim))], axis=0)
-        #rewards不需要
+        #not need rewards
         #rewards = np.concatenate([np.array(self.history['rewards']).reshape(-1,1), np.zeros((1,1))], axis=0) 
         
         rtgs = np.stack(self.history['rtgs'], axis=0,dtype=np.float32)
