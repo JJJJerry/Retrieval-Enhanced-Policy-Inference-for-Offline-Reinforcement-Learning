@@ -315,8 +315,6 @@ for i in range(eval_num):
         
         prob = torch.from_numpy(prob)
         sampled_action=torch.multinomial(prob, num_samples=1)
-        #action = sampled_action.cpu().numpy()[0]
-        #sampled_action=torch.argmax(prob)
         action = sampled_action.cpu().item()
         actions += [sampled_action]
         state, reward, done = env.step(action)
